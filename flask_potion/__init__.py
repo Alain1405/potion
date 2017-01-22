@@ -102,10 +102,16 @@ class Api(object):
         """
         app.config.setdefault('POTION_MAX_PER_PAGE', 100)
         app.config.setdefault('POTION_DEFAULT_PER_PAGE', 20)
+        decorate_schema = app.config.setdefault('POTION_DECORATE_SCHEMA', True)
+
+        schema_view = self.output(self._schema_view)
+
+        if decorate_schema:
+            schema_view = self._decorate(schema_view)
 
         self._register_view(app,
                             rule=''.join((self.prefix, '/schema')),
-                            view_func=self.output(self._schema_view),
+                            view_func=schema_view,
                             endpoint='schema',
                             methods=['GET'])
 
@@ -115,6 +121,11 @@ class Api(object):
 
         app.handle_exception = partial(self._exception_handler, app.handle_exception)
         app.handle_user_exception = partial(self._exception_handler, app.handle_user_exception)
+
+    def _decorate(self, view):
+        for decorator in self.decorators:
+            view = decorator(self.output(view))
+        return view
 
     def _register_view(self, app, rule, view_func, endpoint, methods):
         if self.blueprint:
@@ -182,8 +193,7 @@ class Api(object):
 
         view = self.output(view_func)
 
-        for decorator in self.decorators:
-            view = decorator(view)
+        view = self._decorate(view)
 
         if self.app:
             self.app.add_url_rule(rule, view_func=view, endpoint=endpoint, methods=methods)
