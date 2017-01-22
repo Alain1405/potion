@@ -234,10 +234,16 @@ class SQLAlchemyManager(RelationalManager):
 
     def update(self, item, changes, commit=True):
         session = self._get_session()
-        actual_changes = {
-            key: value for key, value in changes.items()
-            if get_value(key, item, None) != value
-        }
+
+        actual_changes = dict()
+
+        for key, value in changes.items():
+            if value is None:
+                if get_value(key, item, None) is not None:
+                    actual_changes[key] = value
+
+            elif get_value(key, item, None) != value:
+                actual_changes[key] = value
 
         try:
             before_update.send(self.resource, item=item, changes=actual_changes)
