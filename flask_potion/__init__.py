@@ -187,6 +187,8 @@ class Api(object):
         view = self.output(view_func)
 
         if self.app:
+            for decorator in self.decorators:
+                view = decorator(view)
             self.app.add_url_rule(rule, view_func=view, endpoint=endpoint, methods=methods)
         else:
             self.views.append((route, resource, view, endpoint, methods))
