@@ -264,13 +264,28 @@ class SQLAlchemyManager(RelationalManager):
             if hasattr(e.orig, 'pgcode'):
                 if e.orig.pgcode == '23505':  # duplicate key
                     raise DuplicateKey(detail=e.orig.diag.message_detail)
-            raise
+
+            if current_app.debug:
+                raise BackendConflict(debug_info=dict(statement=e.statement, params=e.params))
+            raise BackendConflict()
 
         after_update.send(self.resource, item=item, changes=actual_changes)
         return item
 
     def delete(self, item):
+        session = self._get_session()
+
         before_delete.send(self.resource, item=item)
+
+        try:
+            session.delete(item)
+            session.commit()
+        except IntegrityError as e:
+            session.rollback()
+
+            if current_app.debug:
+                raise BackendConflict(debug_info=dict(statement=e.statement, params=e.params))
+            raise BackendConflict()
 
         session = self._get_session()
         session.delete(item)
