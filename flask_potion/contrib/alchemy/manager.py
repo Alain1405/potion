@@ -287,10 +287,6 @@ class SQLAlchemyManager(RelationalManager):
                 raise BackendConflict(debug_info=dict(exception_message=str(e), statement=e.statement, params=e.params))
             raise BackendConflict()
 
-        session = self._get_session()
-        session.delete(item)
-        session.commit()
-
         after_delete.send(self.resource, item=item)
 
     def relation_instances(self, item, attribute, target_resource, page=None, per_page=None):
