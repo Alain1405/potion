@@ -235,7 +235,7 @@ class SQLAlchemyManager(RelationalManager):
                     raise DuplicateKey(detail=e.orig.diag.message_detail)
 
             if current_app.debug:
-                raise BackendConflict(debug_info=dict(statement=e.statement, params=e.params))
+                raise BackendConflict(debug_info=dict(exception_message=str(e), statement=e.statement, params=e.params))
             raise BackendConflict()
 
         after_create.send(self.resource, item=item)
@@ -266,7 +266,7 @@ class SQLAlchemyManager(RelationalManager):
                     raise DuplicateKey(detail=e.orig.diag.message_detail)
 
             if current_app.debug:
-                raise BackendConflict(debug_info=dict(statement=e.statement, params=e.params))
+                raise BackendConflict(debug_info=dict(exception_message=str(e), statement=e.statement, params=e.params))
             raise BackendConflict()
 
         after_update.send(self.resource, item=item, changes=actual_changes)
@@ -284,7 +284,7 @@ class SQLAlchemyManager(RelationalManager):
             session.rollback()
 
             if current_app.debug:
-                raise BackendConflict(debug_info=dict(statement=e.statement, params=e.params))
+                raise BackendConflict(debug_info=dict(exception_message=str(e), statement=e.statement, params=e.params))
             raise BackendConflict()
 
         session = self._get_session()
